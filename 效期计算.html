@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>保质期计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #333;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            background: white;
+        }
+        
+        .input-mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-group input {
+            flex: 1;
+        }
+        
+        .input-group select {
+            width: 120px;
+        }
+        
+        .input-section {
+            display: none;
+        }
+        
+        .input-section.active {
+            display: block;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        
+        .calculate-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-size: 14px;
+            color: #666;
+            flex: 1;
+        }
+        
+        .result-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            text-align: right;
+            flex: 1;
+        }
+        
+        .result-value.expiry {
+            color: #e74c3c;
+        }
+        
+        .result-value.failure {
+            color: #f39c12;
+        }
+        
+        .result-value.highlight {
+            color: #667eea;
+        }
+        
+        .calculation-detail {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0c5460;
+            line-height: 1.6;
+        }
+        
+        .rule-info {
+            margin-top: 10px;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #856404;
+            line-height: 1.6;
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .reset-btn:active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">📅</div>
+            <h1>保质期计算器</h1>
+            <p>输入生产日期，选择填写方式自动计算</p>
+        </div>
+        
+        <div class="form-group">
+            <label>生产日期</label>
+            <input type="date" id="productionDate" value="">
+        </div>
+        
+        <div class="input-mode-selector">
+            <button class="mode-btn active" onclick="switchMode('duration')">📊 填写保质期时长</button>
+            <button class="mode-btn" onclick="switchMode('date')">📅 填写保质期日期</button>
+        </div>
+        
+        <!-- 保质期时长输入 -->
+        <div class="input-section active" id="durationSection">
+            <div class="form-group">
+                <label>保质期时长</label>
+                <div class="input-group">
+                    <input type="number" id="shelfLife" placeholder="请输入数值" min="1" value="">
+                    <select id="shelfLifeUnit">
+                        <option value="years">年</option>
+                        <option value="months">月</option>
+                        <option value="weeks">周</option>
+                        <option value="days">天</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 保质期日期输入 -->
+        <div class="input-section" id="dateSection">
+            <div class="form-group">
+                <label>保质期截止日期</label>
+                <input type="date" id="expiryDateInput" value="">
+            </div>
+        </div>
+        
+        <button class="calculate-btn" onclick="calculate()">计算</button>
+        
+        <div class="result" id="result">
+            <div class="result-item">
+                <span class="result-label">生产日期</span>
+                <span class="result-value" id="showProductionDate">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">保质期</span>
+                <span class="result-value highlight" id="showShelfLife">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">折算天数</span>
+                <span class="result-value" id="showTotalDays">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">到期日期</span>
+                <span class="result-value expiry" id="expiryDate">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">失效日期</span>
+                <span class="result-value failure" id="failureDate">-</span>
+            </div>
+            <div class="calculation-detail" id="calculationDetail"></div>
+            <div class="rule-info" id="ruleInfo"></div>
+        </div>
+        
+        <button class="reset-btn" onclick="resetForm()">重置</button>
+    </div>
+
+    <script>
+        let currentMode = 'duration'; // 'duration' 或 'date'
+        
+        // 设置默认日期为今天
+        document.getElementById('productionDate').value = new Date().toISOString().split('T')[0];
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 切换输入区域
+            document.getElementById('durationSection').classList.remove('active');
+            document.getElementById('dateSection').classList.remove('active');
+            
+            if (mode === 'duration') {
+                document.getElementById('durationSection').classList.add('active');
+            } else {
+                document.getElementById('dateSection').classList.add('active');
+            }
+            
+            // 隐藏结果
+            document.getElementById('result').classList.remove('show');
+        }
+        
+        function calculateTotalDays(value, unit) {
+            let totalDays = 0;
+            let calculationFormula = '';
+            
+            switch(unit) {
+                case 'years':
+                    // 以年为单位：（年份数 × 365）- 1
+                    totalDays = (value * 365) - 1;
+                    calculationFormula = `(${value} 年 × 365) - 1 = ${value * 365} - 1 = ${totalDays} 天`;
+                    break;
+                case 'months':
+                    // 以月为单位：（月份数 × 30）- 2
+                    totalDays = (value * 30) - 2;
+                    calculationFormula = `(${value} 月 × 30) - 2 = ${value * 30} - 2 = ${totalDays} 天`;
+                    break;
+                case 'weeks':
+                    // 以周为单位：周数 × 7
+                    totalDays = value * 7;
+                    calculationFormula = `${value} 周 × 7 = ${totalDays} 天`;
+                    break;
+                case 'days':
+                    // 以天为单位：直接使用天数
+                    totalDays = value;
+                    calculationFormula = `${value} 天`;
+                    break;
+            }
+            
+            return { totalDays, calculationFormula };
+        }
+        
+        // 根据原始单位和数值判断应该使用哪个规则区间
+        function getRuleBaseDays(value, unit) {
+            let baseDays = 0;
+            
+            switch(unit) {
+                case 'years':
+                    baseDays = value * 365; // 用于规则判断的基础天数
+                    break;
+                case 'months':
+                    baseDays = value * 30; // 用于规则判断的基础天数
+                    break;
+                case 'weeks':
+                    baseDays = value * 7; // 用于规则判断的基础天数
+                    break;
+                case 'days':
+                    baseDays = value; // 用于规则判断的基础天数
+                    break;
+            }
+            
+            return baseDays;
+        }
+        
+        function calculate() {
+            const productionDateStr = document.getElementById('productionDate').value;
+            
+            if (!productionDateStr) {
+                alert('请选择生产日期');
+                return;
+            }
+            
+            const productionDate = new Date(productionDateStr);
+            let totalDays = 0;
+            let shelfLifeText = '';
+            let calculationDetail = '';
+            let ruleBaseDays = 0; // 用于规则判断的基础天数
+            
+            if (currentMode === 'duration') {
+                // 使用保质期时长计算
+                const shelfLifeValue = document.getElementById('shelfLife').value;
+                const shelfLifeUnit = document.getElementById('shelfLifeUnit').value;
+                
+                if (!shelfLifeValue || shelfLifeValue <= 0) {
+                    alert('请输入有效的保质期时长');
+                    return;
+                }
+                
+                const shelfLife = parseInt(shelfLifeValue);
+                const result = calculateTotalDays(shelfLife, shelfLifeUnit);
+                totalDays = result.totalDays;
+                calculationDetail = result.calculationFormula;
+                shelfLifeText = formatShelfLife(shelfLife, shelfLifeUnit);
+                
+                // 获取用于规则判断的基础天数
+                ruleBaseDays = getRuleBaseDays(shelfLife, shelfLifeUnit);
+            } else {
+                // 使用保质期日期计算
+                const expiryDateStr = document.getElementById('expiryDateInput').value;
+                
+                if (!expiryDateStr) {
+                    alert('请选择保质期截止日期');
+                    return;
+                }
+                
+                const expiryDateInput = new Date(expiryDateStr);
+                
+                if (expiryDateInput <= productionDate) {
+                    alert('保质期截止日期必须晚于生产日期');
+                    return;
+                }
+                
+                // 计算天数差
+                const timeDiff = expiryDateInput.getTime() - productionDate.getTime();
+                totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                
+                calculationDetail = `从 ${formatDate(productionDate)} 到 ${formatDate(expiryDateInput)} 共 ${totalDays} 天`;
+                shelfLifeText = formatShelfLifeFromDays(totalDays);
+                
+                // 对于日期输入模式，使用实际天数进行规则判断
+                ruleBaseDays = totalDays;
+            }
+            
+            // 计算到期日期
+            const expiryDate = new Date(productionDate);
+            expiryDate.setDate(expiryDate.getDate() + totalDays);
+            
+            // 使用规则基础天数来判断失效规则
+            const subtractDays = getSubtractDays(ruleBaseDays);
+            const failureDate = new Date(expiryDate);
+            failureDate.setDate(failureDate.getDate() - subtractDays);
+            
+            // 显示结果
+            document.getElementById('showProductionDate').textContent = formatDate(productionDate);
+            document.getElementById('showShelfLife').textContent = shelfLifeText;
+            document.getElementById('showTotalDays').textContent = totalDays + ' 天';
+            document.getElementById('expiryDate').textContent = formatDate(expiryDate);
+            document.getElementById('failureDate').textContent = formatDate(failureDate);
+            
+            // 显示计算详情
+            document.getElementById('calculationDetail').innerHTML = `
+                <strong>📐 计算详情：</strong><br>
+                ${calculationDetail}<br>
+                <strong>到期日期：</strong>${formatDate(productionDate)} + ${totalDays} 天 = ${formatDate(expiryDate)}<br>
+                <strong>规则判断基准：</strong>${ruleBaseDays} 天
+            `;
+            
+            // 显示规则信息
+            document.getElementById('ruleInfo').innerHTML = `
+                <strong>📋 适用规则：</strong>${getRuleDescription(ruleBaseDays)}<br>
+                <strong>⏰ 提前天数：</strong>${subtractDays} 天<br>
+                <strong>📅 失效日期：</strong>${formatDate(expiryDate)} - ${subtractDays} 天 = ${formatDate(failureDate)}
+            `;
+            
+            document.getElementById('result').classList.add('show');
+        }
+        
+        function formatShelfLife(value, unit) {
+            switch(unit) {
+                case 'years':
+                    return value + ' 年';
+                case 'months':
+                    return value + ' 个月';
+                case 'weeks':
+                    return value + ' 周';
+                case 'days':
+                    return formatShelfLifeFromDays(value);
+                default:
+                    return value + ' 天';
+            }
+        }
+        
+        function formatShelfLifeFromDays(totalDays) {
+            if (totalDays >= 365) {
+                const years = Math.floor(totalDays / 365);
+                const remainingDays = totalDays % 365;
+                if (remainingDays === 0) {
+                    return years + ' 年';
+                } else {
+                    return years + ' 年 ' + remainingDays + ' 天';
+                }
+            } else if (totalDays >= 30) {
+                const months = Math.floor(totalDays / 30);
+                const remainingDays = totalDays % 30;
+                if (remainingDays === 0) {
+                    return months + ' 个月';
+                } else {
+                    return months + ' 个月 ' + remainingDays + ' 天';
+                }
+            } else if (totalDays >= 7) {
+                const weeks = Math.floor(totalDays / 7);
+                const remainingDays = totalDays % 7;
+                if (remainingDays === 0) {
+                    return weeks + ' 周';
+                } else {
+                    return weeks + ' 周 ' + remainingDays + ' 天';
+                }
+            } else {
+                return totalDays + ' 天';
+            }
+        }
+        
+        function getSubtractDays(baseDays) {
+            // 使用规则判断的基础天数来确定提前天数
+            if (baseDays >= 365) {
+                return 30; // 保质期1年（含）以上 ≤30天
+            } else if (baseDays >= 90) {
+                return 15; // 保质期3个月（含）至1年以下 ≤15天
+            } else if (baseDays >= 30) {
+                return 8; // 保质期1个月（含）至3个月以下 ≤8天
+            } else if (baseDays >= 15) {
+                return 5; // 保质期15天（含）至1个月以下 ≤5天
+            } else if (baseDays >= 11) {
+                return 3; // 保质期11天（含）至15天以下 ≤3天
+            } else if (baseDays >= 6) {
+                return 2; // 保质期6天（含）至11天以下 ≤2天
+            } else if (baseDays >= 3) {
+                return 1; // 保质期3天（含）至6天以下 ≤1天
+            } else if (baseDays >= 1) {
+                return 0; // 保质期1天（含）至3天以下 当天
+            }
+            return 0;
+        }
+        
+        function getRuleDescription(baseDays) {
+            if (baseDays >= 365) {
+                return '保质期1年（含）以上，提前30天';
+            } else if (baseDays >= 90) {
+                return '保质期3个月（含）至1年以下，提前15天';
+            } else if (baseDays >= 30) {
+                return '保质期1个月（含）至3个月以下，提前8天';
+            } else if (baseDays >= 15) {
+                return '保质期15天（含）至1个月以下，提前5天';
+            } else if (baseDays >= 11) {
+                return '保质期11天（含）至15天以下，提前3天';
+            } else if (baseDays >= 6) {
+                return '保质期6天（含）至11天以下，提前2天';
+            } else if (baseDays >= 3) {
+                return '保质期3天（含）至6天以下，提前1天';
+            } else if (baseDays >= 1) {
+                return '保质期1天（含）至3天以下，当天失效';
+            }
+            return '未知规则';
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function resetForm() {
+            document.getElementById('productionDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('shelfLife').value = '';
+            document.getElementById('shelfLifeUnit').value = 'years';
+            document.getElementById('expiryDateInput').value = '';
+            document.getElementById('result').classList.remove('show');
+            
+            // 重置为默认模式
+            if (currentMode !== 'duration') {
+                switchMode('duration');
+            }
+        }
+    </script>
+
+    <style>
+      .fixed-logo {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        transition: opacity 0.3s;
+      }
+      .fixed-logo:hover {
+        opacity: 0.8;
+      }
+      .fixed-logo img {
+        width: 60px;
+        height: auto;
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* 移动端样式：当屏幕宽度小于等于768px时生效（常见断点） */
+      @media (max-width: 768px) {
+        .fixed-logo img {
+          width: 40px; /* 移动端宽度 */
+        }
+        /* 如果需要，也可以同时调整Logo距离边界的距离 */
+        .fixed-logo {
+          bottom: 15px;
+          right: 15px;
+        }
+      }
+    </style>
+    <div class="fixed-logo">
+      <img src="https://aloha.walmartmobile.cn/user-center/upload/viewImage/bktuser-center-prod-8702570844139794433.png" alt="Logo" loading="lazy">
+    </div>
+  </body>
+</html>
